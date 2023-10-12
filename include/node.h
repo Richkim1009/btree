@@ -9,24 +9,41 @@ class Node {
 public:
     explicit Node(size_t degree): mDegree{degree}
     {
-        mKeys.reserve(degree);
+        mKeys.reserve(degree - 1);
         mChildren.reserve(degree);
     }
 
-    void Insert(T elem)
+    std::unique_ptr<Node> Insert(T elem)
     {
         if (mKeys.size() == 0) {
             mKeys.emplace_back(move(elem));
-            return;
+            return nullptr;
         }
         auto it = BinarySearch(elem);
         size_t index = std::distance(mKeys.begin(), it);
         if (mChildren.size() > 0) {
-            auto node = mChildren[index];
-            node->Insert(elem);
+            auto tmp = mChildren[index]->Insert(elem);
+            if (tmp == nullptr) return nullptr;
+            
         } else {
-            mKeys.insert(it, elem);
-            return;
+            if (mKeys.size() < mDegree - 1) {
+                mKeys.insert(std::next(mKeys.begin(), index), mKeys.begin(), mKeys.end());
+                return nullptr;
+            } else {
+                size_t mid = mDegree / 2;
+                std::unique_ptr<Node<T>> parent, leftChild, rightChild;
+                if (mid == index) {
+                    parent = std::make_unique(mDegree);
+                    rightChild = std::make_unique(mDegree);
+                    leftChild = std::make_unique(mDegree);
+                    rightChild->mKeys.insert(c->mKeys.end(), std::make_move_iterator(mKeys.begin()+index), std::make_move_iterator(c->mKeys.end()));
+                    mKeys.erase(mKeys.begin()+index, mKeys.end());
+                    leftChild->mKeys = move(mKeys);
+                    parent->mChildren.emplace_back(leftChild);
+                    parent->mChildren.emplace_back(rightChild);
+                    return parent;
+                }
+            }
         }
     }
 
