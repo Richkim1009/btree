@@ -3,17 +3,21 @@
 #include <memory>
 #include <vector>
 
-template <typename T, int N = 3>
+template <typename T>
 class BTree {
 public: 
-    BTree()
+    BTree(size_t degree): mDegree(degree), mRoot(std::make_unique<Node<T>>(degree)) {}
+
+    void Insert(const T&& key)
     {
-        root = std::make_unique<Node<T>>(N);
-    }
-    void Insert(T elem)
-    {
-        root->Insert(elem);
+        if (mRoot == nullptr) {
+            mRoot = std::make_unique<Node<T>>(mDegree);
+            mRoot->getKeys.emplace_back(std::forward(key));
+        } else {
+            mRoot->getKeys().emplace_back(std::forward(key));
+        }
     }
 private:
-    std::unique_ptr<Node<T>> root;
+    size_t mDegree;
+    std::unique_ptr<Node<T>> mRoot;
 };
