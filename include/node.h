@@ -15,18 +15,40 @@ public:
 
     std::unique_ptr<Node<T>> Insert(T key)
     {
-        std::unique_ptr<Node<T>> retPtr = nullptr;
         const size_t index = findIndex(key);
+        std::unique_ptr<Node<T>> ptr = nullptr;
         if (mChildren.empty()) {
-            if (mKeys.size() + 1 == mDegree) {
-                retPtr = split(key, index);
+            ptr = mKeys.insert(mKeys.begin()+index, std::move(key));
+            if (mKeys.size() == mDegree) {
+                size_t mid = (mKeys.size() - 1)/2;
+                std::unique_ptr<Node<T>> parent = std::make_unique<Node<T>>(mDegree);
+                std::unique_ptr<NOde<T>> leftChild = std::make_unique<Node<T>>(mDegree);
+                std::unique_ptr<Node<T>> rightChild = std::make_unique<Node<T>>(mDegree);
+                leftChild->GetKeys().insert(leftChild->GetKeys().end(), std::move_iterator(mKeys.begin(), mKeys.begin()+mid));
+                rightChild->GetKeys().insert(rightChild->GetKeys().end(), std::move_iterator(mKeys.begin()+mid+1, mKeys.end()));
+                parent->GetKeys().emplace_back(std::move(mKeys[mid]));
+                parent->GetChildren().emplace_back(std::move(leftChild));
+                parent->GetChildren().emplace_back(std::move(rightChild));
+                return ptr;
             }
-            mKeys.insert(mKeys.begin()+index, key);
+            return ptr;
         } else {
-            mChildren[index]->Insert(std::move(key));
+            ptr = mChildren[index]->Insert(std::move(key));
+            index = findIndex(ptr->GetKeys()[0]);
+            mKeys.insert(mKeys.begin()+index, ptr->GetKeys()[0]);
+            if (mKeys.size() == mDegree) {
+                size_t mid = (mKeys.size() - 1)/2;
+                std::unique_ptr<Node<T>> parent = std::make_unique<Node<T>>(mDegree);
+                std::unique_ptr<NOde<T>> leftChild = std::make_unique<Node<T>>(mDegree);
+                std::unique_ptr<Node<T>> rightChild = std::make_unique<Node<T>>(mDegree);
+                leftChild->GetKeys().insert(leftChild->GetKeys().end(), std::move_iterator(mKeys.begin(), mKeys.begin()+mid));
+                rightChild->GetKeys().insert(rightChild->GetKeys().end(), std::move_iterator(mKeys.begin()+mid+1, mKeys.end()));
+                parent->GetKeys().emplace_back(std::move(mKeys[mid]));
+                parent->GetChildren().emplace_back(std::move(leftChild));
+                parent->GetChildren().emplace_back(std::move(rightChild));
+                return ptr;
+            }
         }
-
-        return retPtr;
     }
 private:
     size_t findIndex(const T& key)
@@ -38,37 +60,7 @@ private:
 
     std::unique_ptr<Node<T>> split(T key, size_t index)
     {
-        size_t mid = (mKeys.size() - 1)/2;
-        std::unique_ptr<Node<T>> parentNode = std::make_unique<Node<T>>{mDegree};
-        std::unique_ptr<Node<T>> rightChild = std::make_unique<Node<T>>{mDegree};
-        std::unique_ptr<Node<T>> leftChild = std::make_unique<Node<T>>{mDegree};
-        if (index == mid) {
-            parentNode->GetKeys().emplace_back(std:move(key));
-            leftChild->GetKeys().insert(leftChild->GetKeys().end(), 
-                std::move_iterator(mKeys.begin(), std::move_iterator(mKeys.begin()+mid)));
-            rightChild->GetKeys().insert(rightChild->Getkeys().end(),
-                std::move_iterator(mKeys.begin()+mid), std::move_iterator(mKeys.end()));
-        } else if (index < mid) {
-            parentNode->GetKeys().emplace_back(std::move(mKeys[mid]));
-            leftChild->GetKeys().insert(leftChild->GetKeys().end(),
-                std::move_iterator(mKeys.begin(), mKeys.begin()+index));
-            leftChild->GetKeys().insert(leftChild->GetKeys().end(),
-                std::move_iterator(mKeys.begin()+index, mKeys.begin()+mid));
-            rightChild->GetKey().insert(rightChild->GetKeys().end(),
-                std::move_iterator(mKeys.begin()+mid+1, mKeys.end()));
-        } else {
-            parentNode->GetKeys().emplace_back(std::move(mKeys[mid]));
-            leftChild->GetKeys().insert(leftChild->GetKeys().end(),
-                std::move_iterator(mKeys.begin(), mKeys.begin()+index));
-            rightChild->GetKey().insert(rightChild->GetKeys().end(),
-                std::move_iterator(mKeys.begin()+mid+1, mKeys.begin()+index));
-            rightChild->GetKeys().insert(rightChild->GetKeys().end(),
-                std::move_iterator(mKeys.begin()+index, mKeys.end()));
-        }
-        parentNode->GetChildren().emplace_bacK(std::move(leftChild));
-        parentNode->GetChildren().emplace_bacK(std::move(rightChild));
-
-        return parentNode;
+        
     }
 private:
     size_t mDegree;
