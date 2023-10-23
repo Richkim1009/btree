@@ -10,12 +10,8 @@ public:
 
     BTree& Insert(const T key)
     {
+        mRoot = std::make_unique<Node<T>>(mDegree);  
         std::unique_ptr<Node<T>> newRoot = nullptr;
-        // 트리가 빈 경우
-        if (mRoot == nullptr) {
-            // 트리를 만듬
-            mRoot = std::make_unique<Node<T>>(mDegree);  
-        }
         newRoot = mRoot->Insert(std::move(key));
         if (mRoot != newRoot) {
             mRoot = std::move(newRoot);
