@@ -19,6 +19,12 @@ public:
         return *this;
     }
 
+    BTree& Delete(const T key)
+    {
+        std::unique_ptr<Node<T>> node = nullptr;
+        mRoot->Delete(key);
+    }
+
 
 private:
     size_t mDegree;

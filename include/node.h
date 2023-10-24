@@ -32,12 +32,34 @@ public:
             return ptr;
         }
     }
+    void Delete(T key)
+    {
+        if (findKey(key)) {
+            
+        } else {
+            size_t index = findIndex(key);
+            mChildren[index]->Delete(key);
+        }
+    }
 private:
     size_t findIndex(const T& key)
     {
         typename std::vector::const_iterator it = std::upper_bound(mKeys.begin(), mKeys.end(), key);
         const size_t index = std::distance(it, mKeys.begin());
         return index;
+    }
+
+    bool findKey(const T& key)
+    {
+        return std::binary_search(mKeys.begin(), mKeys.end(), key);
+    }
+
+    size_t minimumKeySize()
+    {
+        if (mDegree & 1) {
+            return mDegree/2;
+        }
+        return mDegree/2 - 1;
     }
 
     std::unique_ptr<Node<T>> split(Node& node)
