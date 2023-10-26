@@ -15,7 +15,7 @@ public:
 
     std::unique_ptr<Node<T>> Insert(T key)
     {
-        const size_t index = findIndex(key);
+        const size_t index = findUpperIndex(key);
         std::unique_ptr<Node<T>> ptr = nullptr;
         if (mChildren.empty()) {
             mKeys.insert(mKeys.begin()+index, std::move(key));
@@ -24,7 +24,7 @@ public:
         } else {
             ptr = mChildren[index]->Insert(std::move(key));
             if (ptr != nullptr) {
-                index = findIndex(ptr->GetKeys()[0]);
+                index = findUpperIndex(ptr->GetKeys()[0]);
                 mKeys.insert(mKeys.begin()+index, ptr->GetKeys()[0]);
                 mChildren.insert(mChildren.begin()+index, ptr->GetChildren().begin(), ptr->GetChildren().end());
             }
@@ -32,34 +32,66 @@ public:
             return ptr;
         }
     }
-    void Delete(T key)
+    size_t Delete(T key)
     {
-        if (findKey(key)) {
-            
+        if (isFindKey(key)) {
+            const size_t idx = findLowerIndex(key);
+            T tmp = mChildren[idx]->search(key);
+            const size_t currentIdx = findKeyIndex(key)
+            mKeys[currentIdx] = tmp;
         } else {
-            size_t index = findIndex(key);
-            mChildren[index]->Delete(key);
+            const size_t idx = findUpperIndex(key);
+            mChildren[idx]->Delete(key);
         }
     }
 private:
-    size_t findIndex(const T& key)
+    const size_t findUpperIndex(const T& key) const
     {
         typename std::vector::const_iterator it = std::upper_bound(mKeys.begin(), mKeys.end(), key);
         const size_t index = std::distance(it, mKeys.begin());
         return index;
     }
 
-    bool findKey(const T& key)
+    const size_t findLowerIndex(const T& key) const
+    {
+        typename std::vector::const_iterator it = std::lower_bound(mKeys.begin(), mKeys.end(), key);
+        const size_t index = std::distance(it, mKeys.begin());
+        return index;
+    }
+
+    const size_t findKeyIndex(const T& key) const
+    {
+        typename std::vector::const_iterator it = std::find(mKeys.begin(), mKeys.end(), key);
+        const size_t index = std::distance(it, mKeys.begin());
+        return index;
+    }
+
+    bool isFindKey(const T& key) const
     {
         return std::binary_search(mKeys.begin(), mKeys.end(), key);
     }
 
-    size_t minimumKeySize()
+    const size_t minimumKeySize() const noexcept
     {
         if (mDegree & 1) {
             return mDegree/2;
         }
         return mDegree/2 - 1;
+    }
+
+    T search(T& key)
+    {
+        if (mChildren.size() == 0) {
+            T tmp = mKeys[mKeys.size()-1];
+            mKeys.pop_back();
+            return tmp;
+        } else {
+            const size_t idx = mChildren.size() - 1;
+            if (mChildren[idx]->GetKeys().size() < minimumKeySize()) {
+                
+            }
+            return mChildren[idx]->search(key);
+        }
     }
 
     std::unique_ptr<Node<T>> split(Node& node)
