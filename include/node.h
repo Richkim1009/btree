@@ -87,10 +87,20 @@ private:
             return tmp;
         } else {
             const size_t idx = mChildren.size() - 1;
+            T tmp = mChildren[idx]->search(key);
             if (mChildren[idx]->GetKeys().size() < minimumKeySize()) {
-                
+                // 제일 작은거 
+                if (idx == 0) {
+                    // 제일 작은거 가져오는거
+                    mChildren[idx+1]->GetKeys()
+                // 제일 큰거    
+                } else if (idx == mChildren.size()-1) {
+                // 나머지
+                } else {
+
+                }
             }
-            return mChildren[idx]->search(key);
+            return tmp;
         }
     }
 
