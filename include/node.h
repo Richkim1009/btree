@@ -87,20 +87,43 @@ private:
             return tmp;
         } else {
             const size_t idx = mChildren.size() - 1;
-            T tmp = mChildren[idx]->search(key);
+            const size_t currentIdx = mKeys.size() - 1;
+            T childItem = mChildren[idx]->search(key);
             if (mChildren[idx]->GetKeys().size() < minimumKeySize()) {
-                // 제일 작은거 
                 if (idx == 0) {
-                    // 제일 작은거 가져오는거
-                    mChildren[idx+1]->GetKeys()
+                    // children을 옮겨야됨??
+                    if (mChildren[idx+1]->GetKeys().size() > minimumKeySize()) {
+                        const auto & childKeys = mChildren[idx+1]->GetKeys();
+                        const T childItem = childKeys[0];
+                        childKeys.erase(keys.begin());
+                        mKeys.emplace_back(std::move(childItem));
+                    } else {
+                        T currentItem = mKeys[currentIdx];
+                        auto & leftChildKeys = mChildren[idx].GetKeys();
+                        auto & leftChildChildren = mChildren[idx].GetChildren();
+                        auto & rightChildKeys = mChildren[idx+1].GetKeys();
+                        auto & rightChildChildren = mChildren[idx+1].GetChildren();
+                        leftChildKeys.emplace_back(currentItem);
+                        leftChildKeys.insert(leftChildKeys.end(), rightChildKeys.begin(), rightChildKeys.end());
+                        rightChildChildren.insert(leftChildChildren.end(), rightChildChildren.begin(), rightChildChildren.end());
+                        mChildren.pop_back();
+                        mKeys.pop_back();
+                    }
                 // 제일 큰거    
                 } else if (idx == mChildren.size()-1) {
-                // 나머지
+                    if (mChildren[idx-1]->GetKeys().size() > minimumKeySize()) {
+                        const auto & childKeys = mChildren[idx-1]->GetKeys();
+                        const T childItem = childKeys[childKeys.size()-1];
+                        childKeys.pop_back();
+                        mKeys.insert(mKeys.begin(), std::move(childItem));  
+                    } else {
+
+                    }
                 } else {
 
                 }
             }
-            return tmp;
+            return childItem;
         }
     }
 
