@@ -10,10 +10,11 @@ public:
 
     BTree& Insert(const T key)
     {
-        mRoot = std::make_unique<Node<T>>(mDegree);  
-        std::unique_ptr<Node<T>> newRoot = nullptr;
-        newRoot = mRoot->Insert(std::move(key));
-        if (mRoot != newRoot) {
+        if (!mRoot) {
+            mRoot = std::make_unique<Node<T>>(mDegree);
+        }
+        std::unique_ptr<Node<T>> newRoot = mRoot->Insert(std::move(key));
+        if (newRoot != nullptr) {
             mRoot = std::move(newRoot);
         }
         return *this;
@@ -21,8 +22,18 @@ public:
 
     BTree& Delete(const T key)
     {
-        std::unique_ptr<Node<T>> node = nullptr;
         mRoot->Delete(key);
+        if (mRoot->GetKeys().size() == 0) {
+            mRoot = std::move(mRoot->GetChildren()[0]);
+        }
+        return *this;
+    }
+
+    void Print() const
+    {
+        if (mRoot) {
+            mRoot->print(0);
+        }
     }
 
 
