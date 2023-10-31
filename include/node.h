@@ -42,9 +42,9 @@ public:
             ptr = mChildren[index]->Insert(std::move(key));
             if (ptr != nullptr) {
                 index = findUpperIndex(ptr->GetKeys()[0]);
-                mKeys.insert(mKeys.begin()+index, ptr->GetKeys()[0]);
-                ptr->GetKeys().erase(ptr->GetKeys().begin());
-                std::cout << ptr->GetChildren().size() << std::endl;
+                mKeys.insert(mKeys.begin()+index, ptr->GetKeys()[0]);       
+                mChildren.erase(mChildren.begin()+index);
+                ptr->GetKeys().clear();
                 mChildren.insert(mChildren.begin()+index, 
                 std::make_move_iterator(ptr->GetChildren().begin()), std::make_move_iterator(ptr->GetChildren().end()));
                 ptr->GetChildren().clear();
@@ -181,6 +181,7 @@ private:
             std::unique_ptr<Node<T>> parent = std::make_unique<Node<T>>(mDegree);
             std::unique_ptr<Node<T>> leftChild = std::make_unique<Node<T>>(mDegree);
             std::unique_ptr<Node<T>> rightChild = std::make_unique<Node<T>>(mDegree);
+
             leftChild->GetKeys().insert(
                 leftChild->GetKeys().end(),
                 std::make_move_iterator(node.GetKeys().begin()),
@@ -197,12 +198,12 @@ private:
                 leftChild->GetChildren().insert(
                     leftChild->GetChildren().end(),
                     std::make_move_iterator(node.GetChildren().begin()),
-                    std::make_move_iterator(node.GetChildren().begin() + mid)
+                    std::make_move_iterator(node.GetChildren().begin() + mid+1)
                 );
 
                 rightChild->GetChildren().insert(
                     rightChild->GetChildren().end(),
-                    std::make_move_iterator(node.GetChildren().begin() + mid + 1),
+                    std::make_move_iterator(node.GetChildren().begin() + mid+1),
                     std::make_move_iterator(node.GetChildren().end())
                 );
             }
