@@ -214,7 +214,7 @@ private:
     {
         std::unique_ptr<Node<T>> ptr = nullptr;
         if (node.GetKeys().size() == node.GetDegree()) {
-            size_t mid = mKeys.size() == 0 ? 0 : (mKeys.size()-1)/2
+            size_t mid = mKeys.size() == 0 ? 0 : (mKeys.size()-1)/2;
             std::unique_ptr<Node<T>> parent = std::make_unique<Node<T>>(mDegree);
             std::unique_ptr<Node<T>> leftChild = std::make_unique<Node<T>>(mDegree);
             std::unique_ptr<Node<T>> rightChild = std::make_unique<Node<T>>(mDegree);

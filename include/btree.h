@@ -6,7 +6,17 @@
 template <typename T>
 class BTree {
 public: 
-    BTree(size_t degree): mDegree(degree), mRoot(std::make_unique<Node<T>>(degree)) {}
+    BTree(): mDegree(0), mRoot(nullptr) {}
+
+    bool Initialize(int degree)
+    {
+        if (degree < 3) {
+            return false;
+        } 
+        mDegree = static_cast<size_t>(degree);
+        mRoot = std::make_unique<Node<T>>(mDegree);
+        return true;
+    }
 
     BTree& Insert(const T key)
     {
@@ -35,7 +45,6 @@ public:
             mRoot->print(0);
         }
     }
-
 
 private:
     size_t mDegree;
