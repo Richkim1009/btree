@@ -15,8 +15,7 @@ public:
     const std::vector<std::unique_ptr<Node<T>>>& GetChildren() const {return mChildren;}
     void print(int depth) const
     {
-        std::string indent = std::string(depth * 2, ' '); 
-
+        std::string indent = std::string(depth * 2, ' ');
         std::cout << indent << "Keys: ";
         for (const T& key : mKeys) {
             std::cout << key << " ";
@@ -57,14 +56,34 @@ public:
     void Delete(T key)
     {
         if (isFoundKey(key)) {
-            const size_t idx = findLowerIndex(key);
-            T tmp = mChildren[idx]->search(key);
             const size_t currentIdx = findKeyIndex(key);
-            mKeys[currentIdx] = tmp;
+            if (mChildren.empty()) {
+                mKeys.erase(mKeys.begin()+currentIdx);
+            } else {
+                T tmp = mChildren[currentIdx]->GetPredecessorKey();
+                mKeys[currentIdx] = std::move(tmp);
+                if (mChildren[currentIdx]->GetKeys().size() < minimumKeySize()) {
+                    balaced(currentIdx);
+                }
+            }
         } else {
-            const size_t idx = findUpperIndex(key);
-            mChildren[idx]->Delete(key);
+            const size_t uppderIdx = findUpperIndex(key);
+            const size_t lowerIdx = findLowerIndex(key);
+            mChildren[uppderIdx]->Delete(key);
+            if (mChildren[uppderIdx]->GetKeys().size() < minimumKeySize()) {
+                balaced(uppderIdx-lowerIdx);
+            }
         }
+    }
+
+    T GetPredecessorKey()
+    {
+        return getPredecessorKey();
+    }
+
+    void Balanced(size_t idx)
+    {
+        balaced(idx);
     }
 private:
     const size_t findUpperIndex(const T& key) const
@@ -101,83 +120,101 @@ private:
         return mDegree/2 - 1;
     }
 
-    T search(T& key)
+    void balaced(size_t idx)
     {
-        if (mChildren.size() == 0) {
-            T tmp = mKeys[mKeys.size()-1];
+        if (idx == 0) {
+            if (mChildren[idx+1]->GetKeys().size() > minimumKeySize()) {
+                borrowKeyFromRightSibling(idx);
+            } else {
+                borrowKeyFromParent(idx);
+            }
+        } else if (idx == mChildren.size() - 1) {
+            if (mChildren[idx-1]->GetKeys().size() > minimumKeySize()) {
+                borrowKeyFromLeftSibling(idx);
+            } else {
+                borrowKeyFromParent(idx);
+            }
+        } else {
+            if (mChildren[idx+1]->GetKeys().size() > minimumKeySize()) {
+                borrowKeyFromRightSibling(idx);
+            } else if (mChildren[idx-1]->GetKeys().size() > minimumKeySize()) {
+                borrowKeyFromLeftSibling(idx);
+            } else {
+                borrowKeyFromParent(idx);
+            }
+        }
+    }
+
+    T getPredecessorKey()
+    {
+        if (mChildren.empty()) {
+            T tmp = std::move(mKeys.back());
             mKeys.pop_back();
             return tmp;
-        } else {
-            const size_t idx = mChildren.size() - 1;
-            const size_t currentIdx = mKeys.size() - 1;
-            T childItem = mChildren[idx]->search(key);
-            if (mChildren[idx]->GetKeys().size() < minimumKeySize()) {
-                if (idx == 0) {
-                    if (mChildren[idx+1]->GetKeys().size() > minimumKeySize()) {
-                        borrowKeyFromRightSibling(idx);
-                    } else {
-                        borrowKeyFromParent(idx, currentIdx);
-                    } 
-                } else if (idx == mChildren.size()-1) {
-                    if (mChildren[idx-1]->GetKeys().size() > minimumKeySize()) {
-                        borrowKeyFromLeftSibling(idx);
-                    } else {
-                        borrowKeyFromParent(idx, currentIdx);
-                    }
-                } else {
-                    if (mChildren[idx+1]->GetKeys().size() > minimumKeySize()) {
-                        borrowKeyFromRightSibling(idx);
-                    } else if (mChildren[idx-1]->GetKeys().size() > minimumKeySize()) {
-                        borrowKeyFromLeftSibling(idx);
-                    } else {
-                        borrowKeyFromParent(currentIdx);
-                    }
-                }
-            }
-            return childItem;
         }
+        const size_t idx = mChildren.size() - 1;
+        const size_t currentIdx = mKeys.size() - 1;
+        T tmp = mChildren[idx]->GetPredecessorKey();
+        balaced(idx);
+        
+        return tmp;
     }
 
     void borrowKeyFromRightSibling(size_t idx)
     {
-        auto & childItem = mChildren[idx+1];
-        auto & childKeys = childItem->GetKeys();
-        auto & childChildren = childItem->GetChildren();
+        auto & childNode = mChildren[idx+1];
+        auto & childKeys = childNode->GetKeys();
+        auto & childChildren = childNode->GetChildren();
         mKeys.emplace_back(std::move(childKeys[0]));
-        mChildren.emplace_back(std::move(childChildren[0]));
         childKeys.erase(childKeys.begin());
-        childChildren.erase(childChildren.begin());
+        if (!childChildren.empty()) {
+            mChildren.emplace_back(std::move(childChildren[0]));
+            childChildren.erase(childChildren.begin());
+        }
     }
 
     void borrowKeyFromLeftSibling(size_t idx)
     {
-        auto & childItem = mChildren[idx-1];
-        auto & childKeys = childItem->GetKeys();
-        auto & childChildren = childItem->GetChildren();
+        auto & childNode = mChildren[idx-1];
+        auto & childKeys = childNode->GetKeys();
+        auto & childChildren = childNode->GetChildren();
         mKeys.insert(mKeys.begin(), std::move(childKeys[childKeys.size()-1]));
-        mChildren.insert(mChildren.begin(), std::move(childChildren[childChildren.size()-1]));  
         childKeys.pop_back();
-        childChildren.pop_back();
+        if (!childChildren.empty()) {
+            mChildren.insert(mChildren.begin(), std::move(childChildren[childChildren.size()-1]));  
+            childChildren.pop_back();
+        }
     }
-    void borrowKeyFromParent(size_t idx, size_t currentIdx)
+    void borrowKeyFromParent(size_t idx)
     {
-        auto currentItem = mKeys[currentIdx];
-        auto & leftChildKeys = mChildren[idx].GetKeys();
-        auto & leftChildChildren = mChildren[idx].GetChildren();
-        auto & rightChildKeys = mChildren[idx+1].GetKeys();
-        auto & rightChildChildren = mChildren[idx+1].GetChildren();
-        leftChildKeys.emplace_back(currentItem);
-        leftChildKeys.insert(leftChildKeys.end(), rightChildKeys.begin(), rightChildKeys.end());
-        leftChildChildren.insert(leftChildChildren.end(), std::make_move_iterator(rightChildChildren.begin()), std::make_move_iterator(rightChildChildren.end()));
-        mChildren.pop_back();
-        mKeys.pop_back();
+        auto currentNode = mKeys[idx];
+        auto & leftChildKeys = mChildren[idx]->GetKeys();
+        if (idx + 1 < mChildren.size()) {
+            auto & leftChildChildren = mChildren[idx]->GetChildren();
+            auto & rightChildKeys = mChildren[idx+1]->GetKeys();
+            auto & rightChildChildren = mChildren[idx+1]->GetChildren();
+            if (rightChildChildren.size() != 0) {
+                leftChildChildren.insert(leftChildChildren.end(), 
+                    std::make_move_iterator(rightChildChildren.begin()), 
+                    std::make_move_iterator(rightChildChildren.end())
+                );
+            }
+            leftChildKeys.emplace_back(currentNode);
+            leftChildKeys.insert(leftChildKeys.end(), rightChildKeys.begin(), rightChildKeys.end());
+            
+        } else {
+            leftChildKeys.emplace_back(currentNode);
+        }
+        
+        mChildren.erase(mChildren.begin()+idx+1);
+        mKeys.erase(mKeys.begin()+idx);
     }
 
     std::unique_ptr<Node<T>> split(Node& node)
     {
         std::unique_ptr<Node<T>> ptr = nullptr;
         if (node.GetKeys().size() == node.GetDegree()) {
-            size_t mid = mKeys.size()/2;
+            size_t mid = mKeys.size() == 0 ? 0 : (mKeys.size()-1)/2
             std::unique_ptr<Node<T>> parent = std::make_unique<Node<T>>(mDegree);
             std::unique_ptr<Node<T>> leftChild = std::make_unique<Node<T>>(mDegree);
             std::unique_ptr<Node<T>> rightChild = std::make_unique<Node<T>>(mDegree);

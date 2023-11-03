@@ -23,7 +23,7 @@ public:
     BTree& Delete(const T key)
     {
         mRoot->Delete(key);
-        if (mRoot->GetKeys().size() == 0) {
+        if (mRoot->GetKeys().size() == 0 && mRoot->GetChildren().size() > 0) {
             mRoot = std::move(mRoot->GetChildren()[0]);
         }
         return *this;
