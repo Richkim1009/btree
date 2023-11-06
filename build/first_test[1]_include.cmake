@@ -1,5 +1,0 @@
-if(EXISTS "/home/polaris/study/cpp/btree/build/first_test[1]_tests.cmake")
-  include("/home/polaris/study/cpp/btree/build/first_test[1]_tests.cmake")
-else()
-  add_test(first_test_NOT_BUILT first_test_NOT_BUILT)
-endif()
